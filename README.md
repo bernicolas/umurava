@@ -9,8 +9,8 @@ An AI-powered recruitment screening tool built for the **Umurava AI Hackathon**.
 
 ## 📚 Documentation & Resources
 
--   **📖 User Manual** - [Click here to read the user manual](https://docs.google.com/document/d/1PYqIWASZxxxUZDKGnmggOANyneqmEQBWsdhNLI1nixE/edit?usp=sharing)
--   **📊 Google Slides Presentation** - [Click here to view the slide deck](https://docs.google.com/document/d/1UxApHAto5eaYfqoyQVbSbs6Wiz_Gc_sNuu19L_XtE_0/edit?usp=sharing)
+- **📖 User Manual** - [Click here to read the user manual](https://docs.google.com/document/d/1PYqIWASZxxxUZDKGnmggOANyneqmEQBWsdhNLI1nixE/edit?usp=sharing)
+- **📊 Google Slides Presentation** - [Click here to view the slide deck](https://docs.google.com/document/d/1UxApHAto5eaYfqoyQVbSbs6Wiz_Gc_sNuu19L_XtE_0/edit?usp=sharing)
 
 **Demo Accounts:**
 
@@ -22,6 +22,14 @@ An AI-powered recruitment screening tool built for the **Umurava AI Hackathon**.
 | Candidate | candidate@umurava.com | Candidate1234! |
 
 ## Architecture
+
+### Data Flow Diagram
+
+![Data Flow Diagram](DFD_Umurava_HR_Platform.png)
+
+### Hiring Workflow
+
+![Hiring Workflow Flowchart](Flowchart_Umurava_HR_Platform.png)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -110,7 +118,6 @@ An AI-powered recruitment screening tool built for the **Umurava AI Hackathon**.
 - Role-based access control (Admin, Recruiter, Candidate)
 - Admin user management dashboard
 
-
 ### AI Screening Output (per candidate)
 
 - **Rank** (1–N)
@@ -127,9 +134,6 @@ An AI-powered recruitment screening tool built for the **Umurava AI Hackathon**.
 
 ## AI Decision Flow
 
-
-
-
 ### Small jobs (≤ 30 applicants) — single call
 
 Recruiter clicks "Run Screening" → server responds 202 immediately
@@ -139,20 +143,18 @@ System loads all applicants for the job
 Job details + all candidate profiles assembled into one structured prompt
 Prompt includes weighted scoring criteria:
 
-Skills match:                    35%
+Skills match: 35%
 Relevant experience (years + quality): 30%
-Education relevance:             15%
-Projects & certifications:       15%
-Availability alignment:           5%
-
+Education relevance: 15%
+Projects & certifications: 15%
+Availability alignment: 5%
 
 Before calling Gemini, the system probes which model is currently
 reachable (tiny test prompt) and picks the page size accordingly:
 
-gemini-2.5-flash available  → 30 candidates per prompt (~67k tokens)
-gemini-2.0-flash only       → 10 candidates per prompt (~22k tokens)
-gemini-2.0-flash-lite only  → 10 candidates per prompt
-
+gemini-2.5-flash available → 30 candidates per prompt (~67k tokens)
+gemini-2.0-flash only → 10 candidates per prompt (~22k tokens)
+gemini-2.0-flash-lite only → 10 candidates per prompt
 
 Prompt sent to Gemini with structured JSON schema enforcement
 (responseMimeType: "application/json" + responseSchema)
@@ -161,7 +163,6 @@ matchScore (0–100), criteriaScores breakdown, strengths, gaps, recommendation
 Response validated and parsed (3-strategy JSON extractor as safety net)
 Result stored in ScreeningResult, history entry written to ScreeningHistory
 SSE notification fired → frontend invalidates queries → shortlist appears
-
 
 ### Large jobs (> 30 applicants) — paginated background processing
 
@@ -172,8 +173,7 @@ the job keeps running on the server
 System probes Gemini to detect the available model and picks page size:
 
 gemini-2.5-flash → 30 per page
-fallback models  → 10 per page
-
+fallback models → 10 per page
 
 Applicants split into pages of that size
 For each page:
@@ -194,9 +194,9 @@ If a page fails (429 quota / 503 overload):
 — Never silently skips — only moves on after all retries exhausted
 — Other pages continue regardless so partial results are preserved
 Model fallback chain (fires automatically if primary model is unavailable):
-gemini-2.5-flash  (250k tokens/min, 30 candidates/prompt)
+gemini-2.5-flash (250k tokens/min, 30 candidates/prompt)
 ↓ 429 / 503 / timeout
-gemini-2.0-flash  (32k tokens/min,  10 candidates/prompt)
+gemini-2.0-flash (32k tokens/min, 10 candidates/prompt)
 ↓ 429 / 503
 gemini-2.0-flash-lite (32k tokens/min, 10 candidates/prompt)
 When a fallback model is used, the prompt is automatically rebuilt
@@ -212,7 +212,6 @@ Once all pages complete:
 Recruiter views ranked shortlist with per-candidate explanations
 (strengths, gaps, AI recommendation, criteria score breakdown)
 
-
 ### Prompt engineering
 
 AI role: "expert technical recruiter"
@@ -223,8 +222,6 @@ Strengths and gaps limited to 2–4 items each (concise, job-specific)
 Custom recruiter instructions injected at highest priority if set
 Minimum score gate enforced both in the prompt AND server-side
 (double enforcement — AI instruction + hard filter after response)
-
-
 
 ### Resume Parsing Flow (Scenario 2 — PDF)
 
@@ -305,43 +302,43 @@ npm run dev                  # starts on port 3000
 
 ## API Endpoints
 
-| Method | Path                                      | Description              |
-| ------ | ----------------------------------------- | ------------------------ |
-| POST   | `/api/v1/auth/register`                   | Register new account     |
-| POST   | `/api/v1/auth/login`                      | Login                    |
-| GET    | `/api/v1/auth/me`                         | Get current user         |
-| GET    | `/api/v1/auth/google`                     | Start Google OAuth       |
-| GET    | `/api/v1/auth/google/callback`            | Google OAuth callback    |
-| GET    | `/api/v1/jobs`                            | List jobs (paginated)    |
-| POST   | `/api/v1/jobs`                            | Create job               |
-| GET    | `/api/v1/jobs/:id`                        | Get job details          |
-| PUT    | `/api/v1/jobs/:id`                        | Update job               |
-| DELETE | `/api/v1/jobs/:id`                        | Delete job               |
-| GET    | `/api/v1/jobs/:jobId/applicants`          | List applicants for job  |
-| POST   | `/api/v1/jobs/:jobId/applicants/platform` | Add structured profiles  |
-| POST   | `/api/v1/jobs/:jobId/applicants/upload`   | Upload CSV/Excel         |
-| POST   | `/api/v1/jobs/:jobId/applicants/resume`   | Upload PDF resume        |
-| DELETE | `/api/v1/jobs/:jobId/applicants/:id`      | Delete applicant         |
-| POST   | `/api/v1/jobs/:jobId/screening/trigger`   | Trigger AI screening     |
-| GET    | `/api/v1/jobs/:jobId/screening/result`    | Get screening results    |
-| GET    | `/api/v1/jobs/:jobId/screening/history`   | Get screening history    |
-| GET    | `/api/v1/admin/users`                     | List all users (admin)   |
-| PATCH  | `/api/v1/admin/users/:id/role`            | Update user role (admin) |
-| GET | `/api/v1/settings` | Get system settings |
-| PUT | `/api/v1/settings` | Update system settings |
-| GET | `/api/v1/email-settings` | Get email configuration |
-| PUT | `/api/v1/email-settings` | Update email configuration |
-| GET | `/api/v1/notifications` | Get user notifications |
-| PUT | `/api/v1/notifications/:id/read` | Mark notification as read |
-| DELETE | `/api/v1/notifications/:id` | Delete notification |
-| GET | `/api/v1/talent-pool` | List talent pool candidates |
-| POST | `/api/v1/talent-pool` | Add to talent pool |
-| DELETE | `/api/v1/talent-pool/:id` | Remove from talent pool |
-| GET | `/api/v1/auth/verify-invite` | validate invite token |
-| POST | `/api/v1/auth/mark-invite-used` | — consume invite token |
-| POST | `/api/v1/admin/invite` | - admin sends recruiter invite |
-| GET  |`/api/v1/jobs/:jobId/screening/history/:historyId` | get a specific history |
-| POST | `/api/v1/jobs/:jobId/screening/trigger-paginated` | the new paginated screening endpoint |
+| Method | Path                                               | Description                          |
+| ------ | -------------------------------------------------- | ------------------------------------ |
+| POST   | `/api/v1/auth/register`                            | Register new account                 |
+| POST   | `/api/v1/auth/login`                               | Login                                |
+| GET    | `/api/v1/auth/me`                                  | Get current user                     |
+| GET    | `/api/v1/auth/google`                              | Start Google OAuth                   |
+| GET    | `/api/v1/auth/google/callback`                     | Google OAuth callback                |
+| GET    | `/api/v1/jobs`                                     | List jobs (paginated)                |
+| POST   | `/api/v1/jobs`                                     | Create job                           |
+| GET    | `/api/v1/jobs/:id`                                 | Get job details                      |
+| PUT    | `/api/v1/jobs/:id`                                 | Update job                           |
+| DELETE | `/api/v1/jobs/:id`                                 | Delete job                           |
+| GET    | `/api/v1/jobs/:jobId/applicants`                   | List applicants for job              |
+| POST   | `/api/v1/jobs/:jobId/applicants/platform`          | Add structured profiles              |
+| POST   | `/api/v1/jobs/:jobId/applicants/upload`            | Upload CSV/Excel                     |
+| POST   | `/api/v1/jobs/:jobId/applicants/resume`            | Upload PDF resume                    |
+| DELETE | `/api/v1/jobs/:jobId/applicants/:id`               | Delete applicant                     |
+| POST   | `/api/v1/jobs/:jobId/screening/trigger`            | Trigger AI screening                 |
+| GET    | `/api/v1/jobs/:jobId/screening/result`             | Get screening results                |
+| GET    | `/api/v1/jobs/:jobId/screening/history`            | Get screening history                |
+| GET    | `/api/v1/admin/users`                              | List all users (admin)               |
+| PATCH  | `/api/v1/admin/users/:id/role`                     | Update user role (admin)             |
+| GET    | `/api/v1/settings`                                 | Get system settings                  |
+| PUT    | `/api/v1/settings`                                 | Update system settings               |
+| GET    | `/api/v1/email-settings`                           | Get email configuration              |
+| PUT    | `/api/v1/email-settings`                           | Update email configuration           |
+| GET    | `/api/v1/notifications`                            | Get user notifications               |
+| PUT    | `/api/v1/notifications/:id/read`                   | Mark notification as read            |
+| DELETE | `/api/v1/notifications/:id`                        | Delete notification                  |
+| GET    | `/api/v1/talent-pool`                              | List talent pool candidates          |
+| POST   | `/api/v1/talent-pool`                              | Add to talent pool                   |
+| DELETE | `/api/v1/talent-pool/:id`                          | Remove from talent pool              |
+| GET    | `/api/v1/auth/verify-invite`                       | validate invite token                |
+| POST   | `/api/v1/auth/mark-invite-used`                    | — consume invite token               |
+| POST   | `/api/v1/admin/invite`                             | - admin sends recruiter invite       |
+| GET    | `/api/v1/jobs/:jobId/screening/history/:historyId` | get a specific history               |
+| POST   | `/api/v1/jobs/:jobId/screening/trigger-paginated`  | the new paginated screening endpoint |
 
 ## Talent Profile Schema Compliance
 
@@ -361,7 +358,7 @@ The system strictly follows the Umurava Talent Profile Schema:
 
 1. **AI Output Quality** — Gemini responses may vary slightly between runs. The system validates and filters malformed entries.
 2. **Resume Parsing** — PDF parsing accuracy depends on document structure. Scanned image PDFs are not supported.
-3. **Token Limits** — Very large numbers of applicants (100+) in a required  waiting for the gemini model token to reset before sending another batch , thus taking some time.
+3. **Token Limits** — Very large numbers of applicants (100+) in a required waiting for the gemini model token to reset before sending another batch , thus taking some time.
 4. **Model Fallback** — If the primary Gemini model is unavailable, the system falls back through gemini-2.5-flash → gemini-2.0-flash → gemini-2.0-flash-lite.
 5. **Human-in-the-Loop** — AI produces recommendations only. Final hiring decisions remain with the recruiter.
 6. **Authentication** — Google OAuth is optional; email/password auth works independently.
@@ -407,10 +404,7 @@ umurava_hr/
 └── README.md
 ```
 
-
-
-
-# Make the setup easier with Docker 
+# Make the setup easier with Docker
 
 ### start the container
 
@@ -419,9 +413,10 @@ docker compose up --build
 ```
 
 This starts one container:
+
 - `umurava-hr-client` — the Next.js app on port `3000`
 
-###  Verify it's running
+### Verify it's running
 
 ```bash
 docker compose ps
@@ -467,6 +462,7 @@ docker compose up --build
 ```
 
 Both will be available at:
+
 - Frontend → `http://localhost:3000`
 - Backend API → `http://localhost:5000`
 
@@ -477,15 +473,15 @@ your values before running `docker compose up --build`.
 
 The following variables are **required** for full functionality:
 
-| Variable | Required | Notes |
-|---|---|---|
-| `MONGODB_URI` | ✅ | Use `mongodb://mongo:27017/umurava_hr` when running in Docker (not localhost) |
-| `JWT_SECRET` | ✅ | Any long random string — generate with `openssl rand -hex 64` |
-| `GEMINI_API_KEY` | ✅ | Get from [Google AI Studio](https://aistudio.google.com/) |
-| `CLIENT_URL` | ✅ | Set to `http://localhost:3000` for local Docker |
-| `GOOGLE_CLIENT_ID` | ⚪ | Only needed if using Google OAuth login |
-| `GOOGLE_CLIENT_SECRET` | ⚪ | Only needed if using Google OAuth login |
-| `GOOGLE_REDIRECT_URI` | ⚪ | Set to `http://localhost:5000/api/v1/auth/google/callback` |
+| Variable               | Required | Notes                                                                         |
+| ---------------------- | -------- | ----------------------------------------------------------------------------- |
+| `MONGODB_URI`          | ✅       | Use `mongodb://mongo:27017/umurava_hr` when running in Docker (not localhost) |
+| `JWT_SECRET`           | ✅       | Any long random string — generate with `openssl rand -hex 64`                 |
+| `GEMINI_API_KEY`       | ✅       | Get from [Google AI Studio](https://aistudio.google.com/)                     |
+| `CLIENT_URL`           | ✅       | Set to `http://localhost:3000` for local Docker                               |
+| `GOOGLE_CLIENT_ID`     | ⚪       | Only needed if using Google OAuth login                                       |
+| `GOOGLE_CLIENT_SECRET` | ⚪       | Only needed if using Google OAuth login                                       |
+| `GOOGLE_REDIRECT_URI`  | ⚪       | Set to `http://localhost:5000/api/v1/auth/google/callback`                    |
 
 > **Docker-specific note:** When running via Docker Compose, change `MONGODB_URI`
 > from `mongodb://localhost:27017/...` to `mongodb://mongo:27017/...` — `mongo`
@@ -494,4 +490,3 @@ The following variables are **required** for full functionality:
 Without `GEMINI_API_KEY` the AI screening feature will not work.
 Without `JWT_SECRET` no one can log in.
 Everything else is optional depending on which features you use.
-
