@@ -1,0 +1,10 @@
+services:
+  client:
+    build:
+      context: .
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+    container_name: umurava-hr-client
+    ports:
+      - "3000:3000"
+    restart: unless-stopped

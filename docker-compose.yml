@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  # ── MongoDB ──────────────────────────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    container_name: umurava-hr-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Backend API ───────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./server
+      target: production
+    container_name: umurava-hr-api
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongo:27017/umurava_hr
+    env_file:
+      - ./server/.env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Frontend ──────────────────────────────────────────────────────────────────
+  client:
+    build:
+      context: ./client
+      args:
+        # Points to the API container name — works inside Docker network
+        - NEXT_PUBLIC_API_URL=http://api:5000/api/v1
+    container_name: umurava-hr-client
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
