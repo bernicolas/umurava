@@ -19,7 +19,7 @@ An AI-powered recruitment screening tool built for the **Umurava AI Hackathon**.
 | Admin     | admin@umurava.com     | Admin1234!     |
 | Recruiter | demo@umurava.com      | Demo1234!      |
 | Recruiter | recruiter@umurava.com | Recruiter1234! |
-| Candidate | candidate@umurava.com | Candidate1234! |
+
 
 ## Architecture
 
