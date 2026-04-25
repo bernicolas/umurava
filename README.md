@@ -447,9 +447,13 @@ docker compose down
 docker compose logs -f client
 ```
 
-## Running alongside the backend
+## Running separately
 
-Make sure the backend is running first. In a separate terminal, go to the server repo and run:
+Start the server
+
+```bash
+docker compose up --build
+```
 
 ```bash
 docker compose up
