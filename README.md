@@ -470,3 +470,28 @@ Both will be available at:
 - Frontend → `http://localhost:3000`
 - Backend API → `http://localhost:5000`
 
+## ⚠️ Important: Environment Variables for Docker
+
+When running with Docker, copy `server/.env.example` to `server/.env` and fill in
+your values before running `docker compose up --build`.
+
+The following variables are **required** for full functionality:
+
+| Variable | Required | Notes |
+|---|---|---|
+| `MONGODB_URI` | ✅ | Use `mongodb://mongo:27017/umurava_hr` when running in Docker (not localhost) |
+| `JWT_SECRET` | ✅ | Any long random string — generate with `openssl rand -hex 64` |
+| `GEMINI_API_KEY` | ✅ | Get from [Google AI Studio](https://aistudio.google.com/) |
+| `CLIENT_URL` | ✅ | Set to `http://localhost:3000` for local Docker |
+| `GOOGLE_CLIENT_ID` | ⚪ | Only needed if using Google OAuth login |
+| `GOOGLE_CLIENT_SECRET` | ⚪ | Only needed if using Google OAuth login |
+| `GOOGLE_REDIRECT_URI` | ⚪ | Set to `http://localhost:5000/api/v1/auth/google/callback` |
+
+> **Docker-specific note:** When running via Docker Compose, change `MONGODB_URI`
+> from `mongodb://localhost:27017/...` to `mongodb://mongo:27017/...` — `mongo`
+> is the internal Docker service name, not `localhost`.
+
+Without `GEMINI_API_KEY` the AI screening feature will not work.
+Without `JWT_SECRET` no one can log in.
+Everything else is optional depending on which features you use.
+
